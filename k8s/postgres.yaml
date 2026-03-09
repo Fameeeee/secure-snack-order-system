@@ -1,0 +1,68 @@
+# 1. สร้าง Secret เก็บ Password (กฎเหล็ก DevSecOps: ห้ามใส่รหัสผ่านโต้งๆ ใน Deployment)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-secret
+type: Opaque
+stringData:
+  POSTGRES_USER: admin
+  POSTGRES_PASSWORD: supersecretpassword123 # ใน Production จริง เราจะใช้เครื่องมืออย่าง HashiCorp Vault หรือ GitHub Secrets มาฉีดค่านี้แทน
+---
+# 2. สร้างพื้นที่เก็บข้อมูล (Data Persistence)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# 3. ตัวจัดการ Container
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine # ใช้ Alpine เพราะขนาดเล็กและปลอดภัยกว่า
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+          env:
+            - name: POSTGRES_DB
+              value: snack_orders
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-data
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+# 4. เปิดช่องทางสื่อสาร (Service)
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  type: ClusterIP # ปิดไม่ให้คนนอก K8s เข้าถึง DB โดยตรง (Security Best Practice)
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
