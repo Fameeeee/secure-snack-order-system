@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-api-deployment
+spec:
+  replicas: 2 # รัน 2 ตัวเพื่อความชัวร์ (High Availability)
+  selector:
+    matchLabels:
+      app: order-api
+  template:
+    metadata:
+      labels:
+        app: order-api
+    spec:
+      containers:
+      - name: order-api
+        image: order-api:1.0.0 # ชื่อและ Tag ที่คุณเพิ่ง Build
+        imagePullPolicy: Never # บอกให้ OrbStack ใช้ Image ในเครื่อง ไม่ต้องไปหาบน Docker Hub
+        ports:
+        - containerPort: 3000
+        env:
+          # หัวใจสำคัญ: เชื่อมต่อหา Postgres ผ่านชื่อ Service ใน K8s
+          - name: DATABASE_URL
+            value: "postgresql://admin:supersecretpassword123@postgres-service:5432/snack_orders"
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-api-service
+spec:
+  type: NodePort # เปิดประตูให้ Mac ของคุณเข้าถึง API ได้
+  selector:
+    app: order-api
+  ports:
+    - port: 80
+      targetPort: 3000
+      nodePort: 30001 # เข้าผ่าน http://localhost:30001
