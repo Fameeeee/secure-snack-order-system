@@ -1,0 +1,52 @@
+name: Backend DevSecOps Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'order-service/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Job 1: สแกนหารหัสผ่านหลุด (Secret Scanning)
+  secret-scan:
+    name: GitLeaks Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # บังคับดึงประวัติ Git ทั้งหมดมาสแกน แฮกเกอร์ชอบขุด History เก่าๆ
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 2: ตรวจสอบคุณภาพโค้ด (Code Quality & Static Analysis)
+  lint-and-test:
+    name: NestJS Code Quality
+    runs-on: ubuntu-latest
+    needs: secret-scan # กฎเหล็ก: รัน Job นี้ก็ต่อเมื่อไม่มีรหัสผ่านหลุดเท่านั้น
+    defaults:
+      run:
+        working-directory: ./order-service # บังคับให้รันคำสั่งในโฟลเดอร์ของ Backend
+        
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # ใช้ Node.js LTS ล่าสุด
+          cache: 'npm'
+          cache-dependency-path: './order-service/package-lock.json'
+
+      - name: Install Dependencies (Clean Install)
+        run: npm ci # ใช้ ci แทน install เพื่อให้ได้เวอร์ชั่นตรงกับ lockfile เป๊ะๆ ป้องกัน Dependency Drift
+
+      - name: Run ESLint
+        run: npm run lint
