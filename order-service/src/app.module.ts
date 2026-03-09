@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { config } from 'process';
 
 @Module({
   imports: [
@@ -15,11 +14,11 @@ import { config } from 'process';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
-        autoLoadEntities:true,
-        synchronize:true,
+        autoLoadEntities: true,
+        synchronize: true,
       }),
       inject: [ConfigService],
-        })
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
