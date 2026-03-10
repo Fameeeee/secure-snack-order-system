@@ -1,20 +1,29 @@
 #!/bin/bash
 
-echo "🚀 Starting Podman Machine..."
+# 1. ปลุก Podman
 podman machine start
 
-echo "⏳ Waiting for Kubernetes to be ready..."
-until kubectl cluster-info > /dev/null 2>&1; do
-  sleep 2
-done
+# 2. สร้าง Cluster (ถ้ายังไม่มี)
+kind create cluster --name snack-cluster || echo "Cluster already exists"
 
-echo "📦 Applying Kubernetes Manifests..."
+# 3. Build & Load Backend
+echo "🔨 Building Backend..."
+podman build -t localhost/order-api:1.0.0 ./order-service
+podman save -o backend.tar localhost/order-api:1.0.0
+kind load image-archive backend.tar --name snack-cluster
+rm backend.tar
+
+# 4. Build & Load Frontend
+echo "🔨 Building Frontend..."
+podman build -t localhost/snack-frontend:1.0.0 ./frontend
+podman save -o frontend.tar localhost/snack-frontend:1.0.0
+kind load image-archive frontend.tar --name snack-cluster
+rm frontend.tar
+
+# 5. Deploy to Kubernetes
+echo "🚀 Deploying to K8s..."
 kubectl apply -f k8s/postgres.yaml
 kubectl apply -f k8s/backend.yaml
+kubectl apply -f k8s/frontend.yaml
 
-echo "🔍 Checking Pod Status..."
-sleep 5
-kubectl get pods
-
-echo "🔌 Opening Port-Forward to Backend (localhost:3000)..."
-kubectl port-forward svc/order-api-service 3000:80
+echo "✅ All set! Don't forget to run port-forward commands."
