@@ -1,0 +1,28 @@
+name: Frontend DevSecOps
+
+on:
+  push:
+    branches: [ "main", "feat/*" ] # สแกนทุก Branch
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Gitleaks (Secret Scan)
+        uses: gitleaks/gitleaks-action@v2
+      - name: Run Lint
+        working-directory: ./frontend
+        run: npm ci && npm run lint
+
+  build-test:
+    needs: security-check
+    runs-on: ubuntu-latest
+    # ให้ลอง Build ดูว่าพังไหม แต่ไม่ต้องเซฟ Image จริง
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Check
+        run: docker build -t test-frontend ./frontend
