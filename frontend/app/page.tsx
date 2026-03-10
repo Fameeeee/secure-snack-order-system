@@ -1,6 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+interface Order {
+  id: string;
+  customerName: string;
+  snackName: string;
+  quantity: number;
+}
+
 export default function Home() {
   const [orders, setOrders] = useState([]);
   const [form, setForm] = useState({ customerName: '', snackName: '', quantity: 1 });
@@ -44,7 +51,7 @@ export default function Home() {
 
       {/* รายการออเดอร์ */}
       <div className="space-y-4">
-        {orders.map((order: any) => (
+        {orders.map((order: Order) => (
           <div key={order.id} className="flex justify-between items-center p-4 border rounded shadow-sm bg-white">
             <div>
               <p className="font-bold">{order.customerName}</p>
