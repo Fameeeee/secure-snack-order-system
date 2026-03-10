@@ -1,0 +1,18 @@
+# สั่งปิด VM ที่รัน Kubernetes และ Container ทั้งหมด
+podman machine stop
+
+# ลบ Backend และ Database ออกจาก Cluster
+kubectl delete -f k8s/backend.yaml
+kubectl delete -f k8s/postgres.yaml
+
+# สั่งทำลาย Cluster ที่ชื่อ snack-cluster ทิ้ง
+kind delete cluster --name snack-cluster
+
+# ลบ Image ที่ไม่ได้ใช้งาน (Dangling images)
+podman image prune
+
+# ลบ Container ที่หยุดทำงานแล้วทั้งหมด
+podman container prune
+
+# รันทั้งหมดใน run.sh
+./run.sh

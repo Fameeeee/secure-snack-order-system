@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: order-api
-        image: order-api:1.0.0 # ชื่อและ Tag ที่คุณเพิ่ง Build
+        image: localhost/order-api:1.0.0 # ชื่อและ Tag ที่คุณเพิ่ง Build
         imagePullPolicy: Never # บอกให้ OrbStack ใช้ Image ในเครื่อง ไม่ต้องไปหาบน Docker Hub
         ports:
         - containerPort: 3000
