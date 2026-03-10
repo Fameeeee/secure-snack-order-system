@@ -27,3 +27,10 @@ kubectl apply -f k8s/backend.yaml
 kubectl apply -f k8s/frontend.yaml
 
 echo "✅ All set! Don't forget to run port-forward commands."
+
+# เพิ่มท้ายไฟล์ run.sh เพื่อบังคับ Update แอป
+kubectl rollout restart deployment order-api-deployment
+kubectl rollout restart deployment snack-frontend-deployment
+
+echo "⏳ Waiting for pods to restart..."
+kubectl get pods -w
