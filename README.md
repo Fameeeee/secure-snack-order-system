@@ -81,7 +81,7 @@ kubectl apply -f k8s/backend.yaml
 kubectl apply -f k8s/frontend.yaml
 ```
 
-5. (Optional) Port-forward / access services
+5. Port-forward / access services
 
 The included manifests expose NodePorts (30001 and 30002) — the `run.sh` script instead creates kubectl port-forwards from the services to local ports 3000 and 8080 respectively.
 
@@ -111,21 +111,6 @@ npm install
 npm run start:dev
 # API listens on PORT env or 3000 by default
 ```
-
-## What I found in the repo (notes)
-
-- `run.sh` — a helpful end-to-end script that builds images with Podman, loads them into kind and deploys the YAML manifests. It also opens background port-forwards and waits for pods to be ready.
-- `k8s/postgres.yaml` — defines a `Secret` with a plaintext password (stringData). In production please use a secrets manager (Vault, sealed-secrets, ExternalSecrets) and avoid committing secrets to git.
-- `k8s/backend.yaml` — deploys `order-api` pointing at image `localhost/order-api:1.0.0` and passes a `DATABASE_URL` env that references the PostgreSQL service.
-- `k8s/frontend.yaml` — deploys `snack-frontend` pointing at image `localhost/snack-frontend:1.0.0`.
-- Frontend `package.json` shows Next.js v16.1.6 (not v15).
-- Backend `package.json` and `src/main.ts` indicate NestJS v11, TypeORM, and CORS enabled for `http://localhost:8080`.
-
-## Security notes & recommended improvements
-
-- Do not store production secrets in `k8s/*.yaml`. Use a secrets manager (HashiCorp Vault, ExternalSecrets + GitHub Secrets) and inject at deploy time.
-- Keep the principle of least privilege: run containers as non-root and use minimal base images (Alpine is used for postgres in the manifest).
-- Add CI checks to block accidental secrets: `gitleaks` and `eslint` were mentioned in project notes — add them into GitHub Actions workflows.
 
 ## Project structure (top-level)
 
