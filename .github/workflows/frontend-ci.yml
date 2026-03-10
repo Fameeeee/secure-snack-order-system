@@ -12,8 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
+
       - name: Gitleaks (Secret Scan)
         uses: gitleaks/gitleaks-action@v2
+        # --- เพิ่ม 2 บรรทัดนี้เข้าไป ---
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # ---------------------------
+
       - name: Run Lint
         working-directory: ./frontend
         run: npm ci && npm run lint
