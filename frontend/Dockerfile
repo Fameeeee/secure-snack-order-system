@@ -17,26 +17,27 @@ COPY . .
 RUN npm run build
 
 # --- STAGE 3: Production runner ---
+# ... (Stage builder ด้านบนที่สั่ง npm run build)
+
 FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-# 🛡️ Security Best Practice: ไม่รันด้วย Root
+ENV HOSTNAME "0.0.0.0"
+ENV PORT 3000
+
+# 🛡️ สร้าง User เพื่อความปลอดภัย (DevSecOps Standard)
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# ก๊อปปี้ไฟล์เฉพาะที่จำเป็นจาก stage builder
+# ✅ จุดสำคัญ: ต้องก๊อปปี้จาก .next/standalone มาไว้ที่ ./ (Root ของ WORKDIR)
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
-# เปลี่ยนเจ้าของไฟล์เป็น user nextjs
 USER nextjs
 
 EXPOSE 3000
-ENV PORT 3000
-# กำหนด hostname เป็น 0.0.0.0 เพื่อให้ K8s เข้าถึงได้
-ENV HOSTNAME "0.0.0.0"
 
-# รันด้วย server.js ที่ Next.js สร้างให้ในโหมด standalone
+# รันไฟล์ server.js ที่ Next.js สร้างให้
 CMD ["node", "server.js"]
